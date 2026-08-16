@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OCTOCAT MUSEUM — みんなのオクトキャット美術館</title>
+<meta name="description" content="こどもたちがつくったオクトキャットの美術館。ひとりひとつの作品が、ひとつのしるしになります。">
+<meta name="theme-color" content="#05080d">
+<meta property="og:title" content="OCTOCAT MUSEUM">
+<meta property="og:description" content="みんなのオクトキャット美術館">
+<meta property="og:image" content="img/emblem.webp">
+<link rel="icon" href="img/favicon.png">
+<link rel="stylesheet" href="style.css">
+</head>
+<body data-mode="standby">
+
+<div class="flash" id="flash"></div>
+<div class="grain" aria-hidden="true"></div>
+
+<!-- ===== BOOT ===== -->
+<div id="boot"><div class="in">
+  <div class="mas" id="boot-mas"></div>
+  <pre id="boot-text"></pre>
+</div></div>
+
+<!-- ===== HEADER ===== -->
+<header class="hd" id="hd" hidden>
+  <div class="hd-l">
+    <svg class="hd-mark" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg>
+    <div class="hd-t">
+      <div class="t1">OCTOCAT MUSEUM</div>
+      <div class="t2" data-t="subtitle"></div>
+    </div>
+  </div>
+  <div class="hd-r">
+    <div class="hd-read"><span data-t="hd_unit"></span><b class="y">GH &times; NEC 2026</b></div>
+    <div class="hd-read"><span data-t="hd_reg"></span><b class="g" id="rd-n">—</b><i class="sep">/</i><b id="rd-c">—</b></div>
+    <div class="hd-read"><span data-t="hd_sys"></span><b id="rd-mode">—</b></div>
+    <button class="lang" id="lang" type="button" aria-label="Language">JA<i>/</i>EN</button>
+  </div>
+</header>
+
+<nav class="nav" id="nav" hidden></nav>
+<main id="app" hidden></main>
+
+<footer class="ft" id="ft" hidden>
+  <span data-t="ft_l"></span>
+  <span class="mono">OCTOCAT ARCHIVE SYSTEM / C.E.2026</span>
+</footer>
+
+
+<!-- ===== HOME ===== -->
+<template id="t-home">
+  <section class="wrap">
+
+    <div class="hero">
+      <div class="hero-stage">
+        <div class="rings" aria-hidden="true">
+          <i class="ring r1"></i><i class="ring r2"></i><i class="ring r3"></i>
+          <i class="tk n"></i><i class="tk s"></i><i class="tk e"></i><i class="tk w"></i>
+        </div>
+        <div class="core">
+          <img id="hero-img" alt="">
+          <div class="sweep" aria-hidden="true"></div>
+        </div>
+      </div>
+      <div class="hero-cap mono" id="hero-cap"></div>
+    </div>
+
+    <div class="stats">
+      <div class="stat"><div class="v" data-k="n">—</div><div class="l">SPECIMENS</div><div class="s" data-t="st_n"></div></div>
+      <div class="stat"><div class="v y" data-k="halls">—</div><div class="l">HALLS</div><div class="s" data-t="st_h"></div></div>
+      <div class="stat"><div class="v b" data-k="vacant">—</div><div class="l">VACANT</div><div class="s" data-t="st_v"></div></div>
+      <div class="stat"><div class="v p" data-k="cap">—</div><div class="l">CAPACITY</div><div class="s" data-t="st_c"></div></div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-t"><span data-t="pt_units"></span></div>
+      <div class="units" id="units"></div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-t"><span data-t="pt_note"></span></div>
+      <p class="lede" data-t="home_lede"></p>
+      <div class="acts" id="home-acts"></div>
+    </div>
+
+  </section>
+</template>
+
+
+<!-- ===== HALL ===== -->
+<template id="t-hall">
+  <section class="wrap">
+    <div class="panel p-wide">
+      <div class="panel-t"><span class="pt-en"></span><span class="pt-jp"></span></div>
+      <div class="meta"></div>
+      <div class="teams"></div>
+    </div>
+  </section>
+</template>
+
+
+<!-- ===== PERSON ===== -->
+<template id="t-person">
+  <section class="wrap">
+    <div class="panel p-wide sp">
+      <div class="panel-t">SPECIMEN <span class="sp-id"></span></div>
+      <div class="sp-body">
+        <div class="sp-art">
+          <div class="hud">
+            <i class="c tl"></i><i class="c tr"></i><i class="c bl"></i><i class="c br"></i>
+            <img alt="">
+          </div>
+        </div>
+        <div class="sp-data">
+          <div class="sp-top">
+            <div class="mas fr sp-mas"></div>
+            <div>
+              <div class="sp-acc mono"></div>
+              <h1 class="sp-nm"></h1>
+            </div>
+          </div>
+          <dl class="read">
+            <dt>CLASS</dt><dd class="d-job"></dd>
+            <dt>TEAM</dt><dd class="d-team"></dd>
+            <dt>HALL</dt><dd class="d-when"></dd>
+            <dt>ID</dt><dd class="d-id mono"></dd>
+          </dl>
+          <div class="acts sp-acts"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+</template>
+
+
+<!-- ===== TRIAL (QUIZ) ===== -->
+<template id="t-trial">
+  <section class="wrap">
+    <div class="panel p-wide trial">
+      <div class="panel-t"><span data-t="pt_trial"></span></div>
+
+      <div id="tr-intro">
+        <div class="tr-head">
+          <div class="mas fr tr-host" id="tr-host"></div>
+          <p class="lede" data-t="trial_lede"></p>
+        </div>
+        <ul class="tr-rules">
+          <li data-t="trial_r1"></li>
+          <li data-t="trial_r2"></li>
+          <li data-t="trial_r3"></li>
+        </ul>
+        <div class="acts"><button class="btn" id="tr-start" type="button" data-t="trial_start"></button></div>
+      </div>
+
+      <div id="tr-play" hidden>
+        <div class="tr-bar">
+          <div class="mono tr-no"><b id="tr-i">1</b><i>/</i><span id="tr-n">10</span></div>
+          <div class="tr-gauge"><i id="tr-fill"></i></div>
+          <div class="mono tr-hit"><span data-t="trial_hit"></span> <b id="tr-ok">0</b></div>
+        </div>
+        <h2 class="tr-q" id="tr-q"></h2>
+        <ul class="tr-choices" id="tr-choices"></ul>
+        <div class="tr-fb" id="tr-fb" hidden></div>
+      </div>
+
+      <div id="tr-done" hidden>
+        <div class="tr-head">
+          <div class="mas fr tr-host" id="tr-host2"></div>
+          <div>
+            <div class="tr-score mono"><b id="tr-score">0</b><i>/</i><span>10</span></div>
+            <h2 id="tr-verdict"></h2>
+          </div>
+        </div>
+        <p class="lede" id="tr-msg"></p>
+        <div class="acts" id="tr-acts"></div>
+      </div>
+    </div>
+  </section>
+</template>
+
+
+<!-- ===== MURAL ===== -->
+<template id="t-mural">
+  <section class="wrap">
+    <div class="panel p-wide">
+      <div class="panel-t"><span data-t="pt_mural"></span></div>
+      <p class="lede" data-t="mural_lede"></p>
+      <div class="mosaic">
+        <div class="hud">
+          <i class="c tl"></i><i class="c tr"></i><i class="c bl"></i><i class="c br"></i>
+          <canvas id="mural" width="1600" height="1600"></canvas>
+          <div class="scan"></div>
+          <div class="tip" id="tip" hidden></div>
+        </div>
+        <div class="rdout">
+          <span class="k">TARGET</span>
+          <span class="v" id="rd-target">— IDLE —</span>
+          <span class="k">MODE</span>
+          <span class="v" data-t="mural_mode"></span>
+        </div>
+      </div>
+      <div class="acts"><button class="btn ghost" id="rand" type="button" data-t="mural_rand"></button></div>
+    </div>
+  </section>
+</template>
+
+
+<!-- ===== LOCKED ===== -->
+<template id="t-locked">
+  <section class="wrap">
+    <div class="panel locked">
+      <div class="panel-t"><span data-t="pt_locked"></span></div>
+      <div class="lk" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><path d="M6 10V7a6 6 0 1 1 12 0v3h1a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V11a1 1 0 0 1 1-1h1Zm2 0h8V7a4 4 0 0 0-8 0v3Z"/></svg>
+      </div>
+      <p class="lede" data-t="locked_lede"></p>
+      <div class="acts"><a class="btn" href="#/trial" data-t="locked_go"></a></div>
+    </div>
+  </section>
+</template>
+
+<script src="app.js"></script>
+</body>
+</html>
