@@ -68,6 +68,19 @@
       back_hall: '▸ おなじ回の展示室',
       back_mural: '▸ みんなのしるし',
       next_rand: '▸ つぎの人（でたらめ）',
+
+      bf_jp: 'イベント概要',
+      bf_event: 'EVENT', bf_theme: 'THEME', bf_date: 'DATE', bf_loc: 'LOCATION',
+      bf_addr: 'ADDRESS', bf_host: 'HOST', bf_partner: 'PARTNERS',
+      bf_program: 'PROGRAM', bf_crew: 'CREW',
+      bf_total: '計', bf_unit: '名', bf_tbd: '準備中',
+
+      roster_open: '▸ 所属を選ぶ',
+      roster_jp: '所属部隊一覧',
+      roster_role: 'ENGINEER',
+      roster_guest: 'SPECIAL GUEST',
+      roster_guest_role: 'SPECIAL GUEST — MC',
+      lx_mode: 'にほんご モード',
     },
     en: {
       subtitle: 'The Octocat Gallery, made by everyone',
@@ -127,6 +140,19 @@
       back_hall: '▸ Same hall',
       back_mural: '▸ The mark',
       next_rand: '▸ Another person',
+
+      bf_jp: '',
+      bf_event: 'EVENT', bf_theme: 'THEME', bf_date: 'DATE', bf_loc: 'LOCATION',
+      bf_addr: 'ADDRESS', bf_host: 'HOST', bf_partner: 'PARTNERS',
+      bf_program: 'PROGRAM', bf_crew: 'CREW',
+      bf_total: 'Total', bf_unit: '', bf_tbd: 'TBD',
+
+      roster_open: '▸ Choose a squadron',
+      roster_jp: '',
+      roster_role: 'ENGINEER',
+      roster_guest: 'SPECIAL GUEST',
+      roster_guest_role: 'SPECIAL GUEST — MC',
+      lx_mode: 'ENGLISH MODE',
     },
   };
 
@@ -342,13 +368,16 @@
     }).join('');
   }
 
-  function view(id) {
-    const app = $('#app');
-    app.innerHTML = '';
-    app.appendChild($('#' + id).content.cloneNode(true));
-    $$('[data-t]', app).forEach(el => { el.innerHTML = t(el.dataset.t); });
-    fillCounts(app);
-    return app;
+  function view(id, host, keep) {
+    const app = host || $('#app');
+    if (!keep) app.innerHTML = '';
+    const frag = $('#' + id).content.cloneNode(true);
+    const first = frag.firstElementChild;
+    app.appendChild(frag);
+    const scope = keep ? first : app;
+    $$('[data-t]', scope).forEach(el => { el.innerHTML = t(el.dataset.t); });
+    fillCounts(scope);
+    return keep ? first : app;
   }
 
   function fillCounts(root) {
@@ -391,12 +420,108 @@
   }
 
   /* ============ 展示室 ============ */
+  const SQUAD = ['ALPHA', 'BRAVO', 'CHARLIE', 'DELTA', 'ECHO', 'FOXTROT'];
+
+  /** その回のチームを、決めた順に並べて返す。人のいないチームは出さない。 */
+  function teamKeys(mine, cohort) {
+    const order = ORDER[String(cohort)] || [];
+    return [...order.filter(k => mine.some(p => p.team === k)),
+            ...[...new Set(mine.map(p => p.team))].filter(k => !order.includes(k))];
+  }
+
+  /** MISSION BRIEFING。中身が空の行は出さない。 */
+  function fillBrief(app, room) {
+    const b = (room.brief || {})[lang] || (room.brief || {}).ja;
+    const panel = $('.brief', app);
+    if (!b) { panel.hidden = true; return; }
+    $('.pt-jp', panel).textContent = t('bf_jp');
+
+    const rows = [];
+    const line = (k, v, cls) => { if (v) rows.push([t(k), esc(v), cls || '']); };
+    line('bf_event', b.event);
+    line('bf_theme', b.theme);
+    line('bf_date', b.date);
+    line('bf_loc', b.location);
+    if (b.address) {
+      rows.push([t('bf_addr'), b.map
+        ? `<a href="${esc(b.map)}" target="_blank" rel="noopener">${esc(b.address)}</a>`
+        : esc(b.address), 'dim']);
+    }
+    line('bf_host', b.host);
+    line('bf_partner', b.partners, 'dim');
+    line('bf_program', b.program);
+
+    if (b.crew && b.crew.length) {
+      const total = b.crew.reduce((s, c) => s + c[1], 0);
+      const chips = b.crew.map(([nm, n], i) =>
+        `<span class="chip" style="--i:${i}">${esc(nm)} ${n}${t('bf_unit')}</span>`).join('');
+      rows.push([t('bf_crew'),
+        `<div class="crew">${chips}<b class="tot">${t('bf_total')} ${total}${t('bf_unit')}</b></div>`, 'wide']);
+    }
+
+    $('.bf-l', app).innerHTML = rows.map(([k, v, c]) =>
+      `<dt>${k}</dt><dd class="${c}">${v}</dd>`).join('');
+  }
+
+  /** CREW ROSTER。所属ごとのカードを全画面で出す。 */
+  function openRoster(room) {
+    const mine = D.people.filter(p => String(p.cohort) === String(room.cohort));
+    const ov = view('t-roster', document.body, true);
+    $('.ov-jp', ov).textContent = t('roster_jp');
+
+    const keys = teamKeys(mine, room.cohort);
+    const guests = keys.filter(k => k === 'guest');
+    const units = keys.filter(k => k !== 'guest');
+
+    const member = (p, role) => `<a class="mb" href="#/p/${p.id}">
+        <span class="mb-ph"><img loading="lazy" src="img/thumb/${p.id}.webp" alt=""></span>
+        <span class="mb-x"><span class="mb-r">${role}</span><span class="mb-n">${esc(p.name)}</span></span>
+      </a>`;
+
+    const card = (k, i) => {
+      const list = mine.filter(p => p.team === k);
+      const en = (teamOf(k).en || k).toUpperCase();
+      const jp = teamOf(k).label;
+      return `<section class="sq-c" style="--c:${teamOf(k).color}">
+          <header class="sq-h">
+            <span class="sq-m"><img src="${masSrc(MASCOT[k] || 'guest')}" alt=""></span>
+            <span class="sq-x">
+              <span class="sq-s">SQUADRON ${SQUAD[i] || String(i + 1)}</span>
+              <span class="sq-n">${esc(en)} TEAM</span>
+              ${lang === 'ja' ? `<span class="sq-j">${esc(jp)}</span>` : ''}
+            </span>
+          </header>
+          <div class="sq-l">${list.map(p => member(p, t('roster_role'))).join('')}</div>
+        </section>`;
+    };
+
+    $('.sq', ov).innerHTML = units.map(card).join('')
+      + guests.map(k => {
+        const list = mine.filter(p => p.team === k);
+        return `<section class="sq-c gu" style="--c:${teamOf(k).color}">
+            <header class="sq-h sq-h2"><span class="sq-s">${t('roster_guest')}</span></header>
+            <div class="sq-l">${list.map(p => member(p, t('roster_guest_role'))).join('')}</div>
+          </section>`;
+      }).join('');
+
+    const close = () => { ov.classList.remove('on'); setTimeout(() => ov.remove(), 240); };
+    $('.ov-x', ov).addEventListener('click', close);
+    ov.addEventListener('click', e => { if (e.target === ov) close(); });
+    ov.addEventListener('pointerdown', e => { if (e.target.closest('.mb')) close(); });
+    document.addEventListener('keydown', function esc2(e) {
+      if (e.key === 'Escape') { close(); document.removeEventListener('keydown', esc2); }
+    });
+    requestAnimationFrame(() => ov.classList.add('on'));
+  }
+
   function vHall(cohort) {
     const room = D.rooms.find(r => String(r.cohort) === String(cohort));
     if (!room) return vHome();
     const app = view('t-hall');
-    $('.pt-en', app).textContent = 'HALL ' + String(room.cohort).padStart(2, '0');
-    $('.pt-jp', app).textContent = lang === 'ja' ? room.title : room.date;
+    const hp = $('.hallp', app);
+    $('.pt-en', hp).textContent = 'HALL ' + String(room.cohort).padStart(2, '0');
+    $('.pt-jp', hp).textContent = lang === 'ja' ? room.title : room.date;
+    fillBrief(app, room);
 
     const mine = D.people.filter(p => String(p.cohort) === String(room.cohort));
     $('.meta', app).innerHTML = [
@@ -406,11 +531,13 @@
       `${t('vacant')} <b>${Math.max(0, room.seats - mine.length)}</b>`,
     ].join('');
 
-    const order = ORDER[String(room.cohort)] || [];
-    const keys = [...order.filter(k => mine.some(p => p.team === k)),
-                  ...[...new Set(mine.map(p => p.team))].filter(k => !order.includes(k))];
+    const keys = teamKeys(mine, room.cohort);
 
     if (!keys.length) { $('.teams', app).innerHTML = `<p class="lede">${t('no_people')}</p>`; return; }
+
+    $('.hall-acts', app).innerHTML =
+      `<button class="btn" type="button" id="ros">${t('roster_open')}</button>`;
+    $('#ros', app).addEventListener('click', () => openRoster(room));
 
     $('.teams', app).innerHTML = keys.map(k => {
       const list = mine.filter(p => p.team === k);
@@ -623,6 +750,48 @@
     $('#rand', app).addEventListener('click', () => jumpRandom(null));
   }
 
+  /* ============ 言語切替 ============ */
+  /* 切り替えるたびに、この3人のだれかが出てくる。 */
+  const LX_CAST = [
+    { m: 'ducky', c: '#f2c04b' },
+    { m: 'mona', c: '#d16bd9' },
+    { m: 'copilot', c: '#6f7bf7' },
+  ];
+  let lxBusy = false, lxLast = -1;
+
+  function switchLang() {
+    if (lxBusy) return;
+    lxBusy = true;
+
+    let i = Math.floor(Math.random() * LX_CAST.length);
+    if (i === lxLast) i = (i + 1) % LX_CAST.length;
+    lxLast = i;
+    const cast = LX_CAST[i];
+    const next = lang === 'ja' ? 'en' : 'ja';
+
+    const lx = $('#lx');
+    lx.style.setProperty('--lc', cast.c);
+    $('.lx-mas', lx).src = masSrc(cast.m);
+    $('.lx-mode', lx).textContent = L[next].lx_mode;
+    lx.hidden = false;
+    requestAnimationFrame(() => lx.classList.add('on'));
+
+    // 幕が下りきったところで中身を入れ替える。切り替わる瞬間は見せない。
+    setTimeout(() => {
+      lang = next;
+      store.lang = lang;
+      applyStatic();
+      route();
+      lx.classList.add('out');
+    }, 620);
+
+    setTimeout(() => {
+      lx.classList.remove('on', 'out');
+      lx.hidden = true;
+      lxBusy = false;
+    }, 1180);
+  }
+
   /* ============ 行き先 ============ */
   function route() {
     const h = (location.hash || '#/').slice(2);
@@ -657,12 +826,7 @@
         route();
       });
       window.addEventListener('hashchange', route);
-      $('#lang').addEventListener('click', () => {
-        lang = lang === 'ja' ? 'en' : 'ja';
-        store.lang = lang;
-        applyStatic();
-        route();
-      });
+      $('#lang').addEventListener('click', switchLang);
     })
     .catch(e => {
       $('#boot-text').textContent = 'LINK FAILURE\n' + e;
