@@ -73,6 +73,7 @@
       bf_event: 'EVENT', bf_theme: 'THEME', bf_date: 'DATE', bf_loc: 'LOCATION',
       bf_addr: 'ADDRESS', bf_host: 'HOST', bf_partner: 'PARTNERS',
       bf_program: 'PROGRAM', bf_crew: 'CREW',
+      bf_target: 'TARGET', bf_fee: 'ADMISSION',
       bf_total: '計', bf_unit: '名', bf_tbd: '準備中',
 
       roster_open: '▸ 所属を選ぶ',
@@ -145,6 +146,7 @@
       bf_event: 'EVENT', bf_theme: 'THEME', bf_date: 'DATE', bf_loc: 'LOCATION',
       bf_addr: 'ADDRESS', bf_host: 'HOST', bf_partner: 'PARTNERS',
       bf_program: 'PROGRAM', bf_crew: 'CREW',
+      bf_target: 'TARGET', bf_fee: 'ADMISSION',
       bf_total: 'Total', bf_unit: '', bf_tbd: 'TBD',
 
       roster_open: '▸ Choose a squadron',
@@ -441,6 +443,9 @@
     line('bf_event', b.event);
     line('bf_theme', b.theme);
     line('bf_date', b.date);
+    line('bf_program', b.program);
+    line('bf_target', b.target);
+    line('bf_fee', b.fee);
     line('bf_loc', b.location);
     if (b.address) {
       rows.push([t('bf_addr'), b.map
@@ -449,7 +454,6 @@
     }
     line('bf_host', b.host);
     line('bf_partner', b.partners, 'dim');
-    line('bf_program', b.program);
 
     if (b.crew && b.crew.length) {
       const total = b.crew.reduce((s, c) => s + c[1], 0);
