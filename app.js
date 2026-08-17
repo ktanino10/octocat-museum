@@ -755,7 +755,8 @@
   }
 
   /* ============ 言語切替 ============ */
-  /* 切り替えるたびに、この3人のだれかが出てくる。 */
+  /* 切り替えるたびに、この3人のだれかが出てくる。
+     1=きいろのアヒル / 2=ピンクのネコ / 3=むらさきのコパイロット。 */
   const LX_CAST = [
     { m: 'ducky', c: '#f2c04b' },
     { m: 'mona', c: '#d16bd9' },
@@ -776,24 +777,28 @@
     const lx = $('#lx');
     lx.style.setProperty('--lc', cast.c);
     $('.lx-mas', lx).src = masSrc(cast.m);
+    $('.lx-from', lx).textContent = lang.toUpperCase();
+    $('.lx-to', lx).textContent = next.toUpperCase();
     $('.lx-mode', lx).textContent = L[next].lx_mode;
     lx.hidden = false;
     requestAnimationFrame(() => lx.classList.add('on'));
 
-    // 幕が下りきったところで中身を入れ替える。切り替わる瞬間は見せない。
+    // 中身の入れ替えは、キャラが組み上がって衝撃波が消えたあと。
+    // 幕が下りきっているので、切り替わる瞬間は見えない。
     setTimeout(() => {
       lang = next;
       store.lang = lang;
       applyStatic();
       route();
-      lx.classList.add('out');
-    }, 620);
+    }, 1150);
+
+    setTimeout(() => lx.classList.add('out'), 1460);
 
     setTimeout(() => {
       lx.classList.remove('on', 'out');
       lx.hidden = true;
       lxBusy = false;
-    }, 1180);
+    }, 1820);
   }
 
   /* ============ 行き先 ============ */
