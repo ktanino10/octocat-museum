@@ -45,7 +45,7 @@
 <!-- ===== HEADER ===== -->
 <header class="hd" id="hd" hidden>
   <div class="hd-l">
-    <svg class="hd-mark" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg>
+    <span class="hd-badge"><svg class="hd-mark" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg></span>
     <div class="hd-t">
       <div class="t1">OCTOCAT MUSEUM</div>
       <div class="t2" data-t="subtitle"></div>
@@ -95,7 +95,7 @@
 
     <div class="panel">
       <div class="panel-t"><span data-t="pt_units"></span></div>
-      <div class="units" id="units"></div>
+      <div class="org" id="units"></div>
     </div>
 
     <div class="panel">
@@ -199,8 +199,13 @@
         <div class="tr-bar">
           <div class="mono tr-no"><b id="tr-i">1</b><i>/</i><span id="tr-n">10</span></div>
           <div class="tr-gauge"><i id="tr-fill"></i></div>
+          <div class="mono tr-lv" id="tr-lv" data-d="1">★</div>
           <div class="mono tr-hit"><span data-t="trial_hit"></span> <b id="tr-ok">0</b></div>
+          <div class="mono tr-combo" id="tr-combo" hidden>
+            <span data-t="trial_combo"></span> <b>0</b>
+          </div>
         </div>
+        <div class="tr-final mono" id="tr-final" hidden><i></i><span data-t="trial_final"></span><i></i></div>
         <h2 class="tr-q" id="tr-q"></h2>
         <ul class="tr-choices" id="tr-choices"></ul>
         <div class="tr-fb" id="tr-fb" hidden></div>
@@ -210,8 +215,11 @@
         <div class="tr-head">
           <div class="mas fr tr-host" id="tr-host2"></div>
           <div>
-            <div class="tr-score mono"><b id="tr-score">0</b><i>/</i><span>10</span></div>
+            <div class="tr-score mono"><b id="tr-score">0</b><i>/</i><span id="tr-of">10</span></div>
             <h2 id="tr-verdict"></h2>
+            <div class="mono tr-combo done" id="tr-best" hidden>
+              <span data-t="trial_best"></span> <b>0</b>
+            </div>
           </div>
         </div>
         <p class="lede" id="tr-msg"></p>
