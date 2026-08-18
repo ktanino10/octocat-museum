@@ -1322,22 +1322,22 @@
     lx.hidden = false;
     requestAnimationFrame(() => lx.classList.add('on'));
 
-    // 中身の入れ替えは、キャラが組み上がって衝撃波が消えたあと。
+    // 中身の入れ替えは、キャラが正面で止まって衝撃波が消えたあと。
     // 幕が下りきっているので、切り替わる瞬間は見えない。
     setTimeout(() => {
       lang = next;
       store.lang = lang;
       applyStatic();
       route();
-    }, 1150);
+    }, 1320);
 
-    setTimeout(() => lx.classList.add('out'), 1460);
+    setTimeout(() => lx.classList.add('out'), 1660);
 
     setTimeout(() => {
       lx.classList.remove('on', 'out');
       lx.hidden = true;
       lxBusy = false;
-    }, 1820);
+    }, 2020);
   }
 
   /* ============ 行き先 ============ */
