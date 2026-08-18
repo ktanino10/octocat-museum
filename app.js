@@ -654,6 +654,20 @@
   }
 
   /* ============ ホーム ============ */
+  /** リングの回る向きを、来るたびにサイコロで決める。
+      いつも同じ向きだと景色が固まってしまう。
+      ただし隣りあうリングは必ず逆向きにする。同じ向きだと重なって見えて、
+      回っていることに気づけない。 */
+  function spinRings(app) {
+    const coin = () => (Math.random() < .5 ? -1 : 1);
+    const d = coin();
+    const set = (sel, v) => { const el = $(sel, app); if (el) el.style.setProperty('--d', v); };
+    set('.ring.r1', d);
+    set('.ring.r2', -d);
+    set('.ring.r3', coin());
+    set('.rings', coin());
+  }
+
   /** ホーム下段のボタン。封印がとける瞬間に差しかえたいので、別にしてある。 */
   function drawHomeActs(app) {
     const acts = [];
@@ -670,6 +684,109 @@
     });
   }
 
+  /* ============ かくしコマンド ============
+     ロゴを続けて叩くと、GitHubのステッカーが飛び出してくる。
+     10回で3体、50回で大中小あわせて9体。手が止まると数は0に戻る。 */
+  const EGG_CAST = ['ducks', 'copilot2', 'monap'];   /* きいろのアヒル・コパイロット・ピンクのモナ */
+  const EGG_STEP = 10, EGG_BIG = 50, EGG_IDLE = 1500;
+  let tapN = 0, tapT = 0;
+
+  /** ステッカーを1体、へそ(x,y)から放る。size は差しわたしの px。 */
+  function eggOne(name, size, x, y, delay, spread) {
+    const box = $('#egg'); if (!box) return;
+    const b = document.createElement('b');
+    b.style.cssText = `width:${size}px;height:${size}px`;
+    b.innerHTML = `<img src="${masSrc(name)}" alt="">`;
+    box.appendChild(b);
+
+    /* 放物線。まっすぐ飛ぶと的当てに見えるので、横に流れながら上へ抜けさせる。 */
+    const ang = (-90 + spread) * Math.PI / 180;
+    const pow = innerHeight * (.52 + Math.random() * .3);
+    const ex = Math.cos(ang) * pow * 1.15, ey = Math.sin(ang) * pow;
+    const half = size / 2;
+    const spin = (Math.random() < .5 ? -1 : 1) * (120 + Math.random() * 220);
+    const dur = 1500 + Math.random() * 700;
+
+    const at = (px, py, s, r, o) =>
+      ({ transform: `translate(${x - half + px}px,${y - half + py}px) rotate(${r}deg) scale(${s})`, opacity: o });
+
+    b.animate([
+      at(0, 0, .2, 0, 0),
+      at(ex * .18, ey * .16 + 26, 1.12, spin * .12, 1),     /* 飛び出す。少し行きすぎてから戻す */
+      at(ex * .34, ey * .3, 1, spin * .24, 1),
+      at(ex * .78, ey * .82, .96, spin * .74, 1),
+      at(ex, ey, .9, spin, 0),                              /* 画面の外へ抜けながら消える */
+    ], {
+      duration: dur, delay,
+      easing: 'cubic-bezier(.16,.78,.32,1)', fill: 'both',
+    }).onfinish = () => b.remove();
+  }
+
+  /** 50回ぶんの手ごたえ。画面ぜんたいをひと呼吸だけ光らせる。 */
+  function flash() {
+    const box = $('#egg'); if (!box) return;
+    const f = document.createElement('i');
+    f.className = 'egg-f';
+    box.appendChild(f);
+    f.animate([{ opacity: 0 }, { opacity: .5, offset: .12 }, { opacity: 0 }],
+      { duration: 620, easing: 'cubic-bezier(.2,.8,.3,1)' }).onfinish = () => f.remove();
+  }
+
+  /** 何体まとめて放つか決めて、扇のかたちに散らす。 */
+  function eggBurst(big) {
+    const core = $('#core');
+    const r = core ? core.getBoundingClientRect()
+      : { left: innerWidth / 2, top: innerHeight / 2, width: 0, height: 0 };
+    const x = r.left + r.width / 2, y = r.top + r.height / 2;
+    const base = Math.min(innerWidth, innerHeight);
+
+    /* 10回＝3体を横並びに。50回＝大中小の9体を、扇いっぱいに。 */
+    const sizes = big ? [.30, .30, .30, .20, .20, .20, .13, .13, .13] : [.24, .24, .24];
+    const fan = big ? 74 : 40;
+    const n = sizes.length;
+
+    sizes.forEach((k, i) => {
+      const t = n === 1 ? .5 : i / (n - 1);
+      /* 大きい子ほど遅く、真ん中寄りに。小さい子ほど先に、大きく散る。 */
+      const spread = (t - .5) * 2 * fan + (Math.random() - .5) * 14;
+      eggOne(EGG_CAST[i % 3], Math.round(base * k * (big ? .9 : 1)),
+        x, y, i * (big ? 62 : 96), spread);
+    });
+
+    if (core) core.animate(
+      [{ scale: 1 }, { scale: big ? .74 : .84 }, { scale: big ? 1.16 : 1.08 }, { scale: 1 }],
+      { duration: big ? 620 : 420, easing: 'cubic-bezier(.2,.9,.3,1)' });
+    if (big) flash();
+  }
+
+  /** 叩いた回数の表示。10回目から出す。何回で次が起きるか分かるようにする。 */
+  function tapCount(n) {
+    const el = $('#tapc'); if (!el) return;
+    if (n < EGG_STEP) { el.hidden = true; return; }
+    el.hidden = false;
+    el.textContent = `TOUCH ${String(n).padStart(2, '0')} / ${EGG_BIG}`;
+    el.classList.remove('hit'); void el.offsetWidth; el.classList.add('hit');
+  }
+
+  /** ホームのロゴに、叩く手ごたえと隠しコマンドを付ける。 */
+  function bindEgg(app) {
+    const core = $('#core', app); if (!core) return;
+    core.style.cursor = 'pointer';
+    core.addEventListener('pointerdown', () => {
+      const now = performance.now();
+      tapN = (now - tapT > EGG_IDLE) ? 1 : tapN + 1;   /* 手が止まったら数え直し */
+      tapT = now;
+
+      /* 手ごたえ。scale だけを動かす。translate と rotate の漂いは止めない。 */
+      core.animate([{ scale: 1 }, { scale: .92 }, { scale: 1 }],
+        { duration: 180, easing: 'ease-out' });
+
+      if (tapN >= EGG_BIG) { eggBurst(true); tapCount(EGG_BIG); tapN = 0; setTimeout(() => tapCount(0), 2200); }
+      else if (tapN % EGG_STEP === 0) { eggBurst(false); tapCount(tapN); }
+      else tapCount(tapN);
+    });
+  }
+
   /* ============ ホーム ============ */
   function vHome() {
     const app = view('t-home');
@@ -682,6 +799,8 @@
     $('#hero-cap', app).innerHTML = awake ? t('hero_awake') : t('hero_standby');
 
     drawHomeActs(app);
+    spinRings(app);
+    bindEgg(app);
     if (pendingAwaken) { pendingAwaken = false; requestAnimationFrame(() => awaken(app)); }
 
     /* 配備ユニット＝組織図。回ごとに枝分かれさせて、チームが重なっても見わけがつくようにする。
@@ -740,6 +859,15 @@
     const panel = $('.brief', app);
     if (!b) { panel.hidden = true; return; }
     $('.pt-jp', panel).textContent = t('bf_jp');
+
+    /* その回の世界。絵が無い回は帯ごと出さない。 */
+    const wv = $('.wv', panel), c = String(room.cohort);
+    if (wv) {
+      const img = $('.wv-i', wv);
+      img.src = `img/world/w${c}.webp`;
+      img.onerror = () => { wv.hidden = true; };
+      $('.wv-id', wv).textContent = `SECTOR ${c.padStart(2, '0')} / ${room.date}`;
+    }
 
     const rows = [];
     const line = (k, v, cls) => { if (v) rows.push([t(k), esc(v), cls || '']); };
