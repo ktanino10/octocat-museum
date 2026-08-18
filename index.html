@@ -40,6 +40,14 @@
 <div id="boot"><div class="in">
   <div class="mas" id="boot-mas"></div>
   <pre id="boot-text"></pre>
+  <div class="bt-stack">
+    <div class="bt-acr" id="boot-acr" hidden></div>
+    <div class="bt-fin">
+      <div class="bt-word" id="boot-word" hidden></div>
+      <div class="bt-st mono" id="boot-st" hidden></div>
+    </div>
+  </div>
+  <div class="bt-skip mono" aria-hidden="true">PRESS ANY KEY TO SKIP</div>
 </div></div>
 
 <!-- ===== HEADER ===== -->
@@ -73,13 +81,15 @@
   <section class="wrap">
 
     <div class="hero">
-      <div class="hero-stage">
+      <div class="hero-stage" id="hero-stage">
         <div class="rings" aria-hidden="true">
           <i class="ring r1"></i><i class="ring r2"></i><i class="ring r3"></i>
           <i class="tk n"></i><i class="tk s"></i><i class="tk e"></i><i class="tk w"></i>
         </div>
-        <div class="core">
-          <img id="hero-img" alt="">
+        <i class="shock" aria-hidden="true"></i>
+        <div class="core" id="core">
+          <span class="core-mark" id="core-mark" aria-hidden="true"><svg viewBox="0 0 16 16"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg></span>
+          <img id="hero-img" alt="" hidden>
           <div class="sweep" aria-hidden="true"></div>
         </div>
       </div>

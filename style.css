@@ -1,18 +1,24 @@
 /* OCTOCAT MUSEUM — コクピットHUD風の見た目。
-   認証(クイズ)を通すと body[data-mode=awake] になり、
-   差し色が水色→琥珀に変わって解放された機能が出る。 */
+   待機のあいだは深い紺の世界。認証(クイズ)を通すと body[data-mode=awake] になり、
+   世界ごと琥珀へ反転して、解放された機能が出る。 */
 
 :root{
-  --bg:#05080d; --bg2:#0a0f17; --line:#1b2735; --line2:#243448;
-  --tx:#dbe6f2; --dim:#7d8ea3; --mute:#4d5f74;
-  --acc:#35e0ff; --acc2:#0b7f96;      /* 差し色（待機） */
+  /* 待機＝紺。地の色から線までぜんぶ青に寄せて、覚醒との差を大きくする */
+  --bg:#060a1a; --bg2:#0c1327; --line:#182448; --line2:#24345f;
+  --tx:#dce7fa; --dim:#8397be; --mute:#566b96;
+  --acc:#35e0ff; --acc2:#0d5f8f;      /* 差し色（待機） */
   --warn:#ffb400; --ok:#3fd97f; --ng:#ff5a6e; --pk:#ff4ac0;
   --gut:clamp(14px,3vw,30px);
   --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;
   --sans:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Noto Sans JP",
          "Yu Gothic UI",system-ui,sans-serif;
 }
-body[data-mode=awake]{ --acc:#ffc247; --acc2:#8a5a00; }
+/* 覚醒＝琥珀。青みを抜いて、地の色を落ち着いた黒に戻す */
+body[data-mode=awake]{
+  --bg:#05080d; --bg2:#0a0f17; --line:#1b2735; --line2:#243448;
+  --tx:#dbe6f2; --dim:#7d8ea3; --mute:#4d5f74;
+  --acc:#ffc247; --acc2:#8a5a00;
+}
 
 *{box-sizing:border-box;margin:0;padding:0}
 html{-webkit-text-size-adjust:100%}
@@ -25,7 +31,7 @@ body{
     linear-gradient(90deg,var(--line) 1px,transparent 1px);
   background-size:64px 64px;
   background-position:center top;
-  transition:--acc .6s;
+  transition:background-color .9s ease,color .9s ease;
 }
 body::before{           /* 中央から外へ落ちる暗さ。格子を主張させすぎない */
   content:""; position:fixed; inset:0; z-index:-1; pointer-events:none;
@@ -53,6 +59,45 @@ img{max-width:100%;display:block}
   font-family:var(--mono); font-size:clamp(10px,2.4vw,13px);
   line-height:2; color:var(--acc); text-shadow:0 0 12px var(--acc2);
   white-space:pre; max-width:100%;
+}
+/* 頭文字が一段ずつ立ち上がる。左の文字だけ大きく、右に語をそえる */
+/* 頭文字と、寄り集まったあとの系統名は同じ場所に重ねる。
+   そうしないと、消えた頭文字のぶんだけ空白が居すわる。 */
+.bt-stack{display:grid;place-items:center}
+.bt-stack>*{grid-area:1/1}
+.bt-fin{display:flex;flex-direction:column;align-items:center;gap:12px}
+.bt-acr{display:grid;gap:2px;font-family:var(--mono);width:min(92vw,340px)}
+.bt-acr[hidden],.bt-word[hidden],.bt-st[hidden]{display:none}
+.bt-row{display:flex;align-items:baseline;gap:8px;
+        animation:btRow .34s cubic-bezier(.2,1,.3,1) both}
+.bt-row b{font-size:clamp(17px,4.4vw,22px);line-height:1;color:var(--acc);
+          width:1.1em;text-align:center;text-shadow:0 0 14px var(--acc)}
+.bt-row span{font-size:clamp(9px,2.2vw,11px);letter-spacing:.22em;color:var(--dim)}
+@keyframes btRow{
+  from{opacity:0;transform:translateX(-14px);filter:blur(3px)}
+  to  {opacity:1;transform:none;filter:none}
+}
+/* 立ち上がった頭文字が、ひとつの系統名に寄り集まる */
+.bt-acr.fold{animation:btFold .42s ease-in forwards}
+@keyframes btFold{to{opacity:0;transform:translateY(-8px) scaleY(.9)}}
+.bt-word{display:flex;gap:clamp(6px,2vw,12px);font-family:var(--mono);
+         font-size:clamp(22px,6.6vw,38px);line-height:1;font-weight:700}
+.bt-word b{color:var(--acc);text-shadow:0 0 18px var(--acc),0 0 44px var(--acc2);
+           animation:btWord .5s cubic-bezier(.2,1,.3,1) both}
+@keyframes btWord{
+  from{opacity:0;transform:translateY(12px) scale(1.5);filter:blur(6px)}
+  to  {opacity:1;transform:none;filter:none}
+}
+.bt-st{font-size:clamp(9px,2.4vw,11px);letter-spacing:.34em;color:var(--dim);
+       animation:btSt .4s ease-out both,btBlink 1.1s steps(1) infinite .4s}
+@keyframes btSt{from{opacity:0;letter-spacing:.6em}to{opacity:1}}
+@keyframes btBlink{0%,60%{opacity:1}61%,100%{opacity:.28}}
+.bt-skip{position:fixed;bottom:18px;left:0;right:0;text-align:center;
+         font-size:9px;letter-spacing:.28em;color:var(--mute);
+         animation:btSkip 2.6s ease-in both}
+@keyframes btSkip{0%,60%{opacity:0}100%{opacity:.75}}
+@media(prefers-reduced-motion:reduce){
+  .bt-row,.bt-word b,.bt-st,.bt-skip{animation-duration:.01ms!important}
 }
 
 /* ---------- 発光の一閃 ---------- */
@@ -172,12 +217,77 @@ main{min-height:60vh;padding:var(--gut) 0 56px}
 .tk.e,.tk.w{height:1px;width:14px;top:50%}
 .tk.n{top:0}.tk.s{bottom:0}.tk.e{right:0}.tk.w{left:0}
 
+/* ---------- 封印がとける ---------- */
+/* ためて、はじけて、世界の色が変わり、みんなの絵が実体になる。 */
+.shock{position:absolute;inset:22%;border-radius:50%;pointer-events:none;
+       border:2px solid var(--acc);opacity:0}
+.hero-stage.awaken .shock{animation:shockOut 1.1s cubic-bezier(.16,.8,.3,1) .62s both}
+.hero-stage.awaken .shock::before,.hero-stage.awaken .shock::after{
+  content:"";position:absolute;inset:-2px;border-radius:50%;border:1px solid var(--acc)}
+.hero-stage.awaken .shock::before{animation:shockOut 1.25s cubic-bezier(.16,.8,.3,1) .74s both}
+.hero-stage.awaken .shock::after{animation:shockOut 1.4s cubic-bezier(.16,.8,.3,1) .86s both}
+@keyframes shockOut{
+  0%  {opacity:0;transform:scale(.35)}
+  12% {opacity:1}
+  100%{opacity:0;transform:scale(2.5)}
+}
+/* ためる間はリングが速く回り、はじけたあとゆっくり戻る */
+.hero-stage.awaken .ring.r3{animation:spin 1.1s linear infinite}
+.hero-stage.awaken .ring.r2{animation:spin 2.4s linear infinite reverse}
+.hero-stage.awaken .ring.r1{animation:spin 4s linear infinite}
+/* しるしは息を吸い込んでから、光にとける */
+.hero-stage.awaken .core-mark{animation:markCharge .72s cubic-bezier(.5,0,.9,.4) both}
+@keyframes markCharge{
+  0%  {transform:scale(1);filter:brightness(1)}
+  62% {transform:scale(.82);filter:brightness(1.7)}
+  100%{transform:scale(2.4);filter:brightness(4);opacity:0}
+}
+/* 入れかわった絵は、粗い像からゆっくり像を結ぶ */
+.hero-stage.awaken .core img{animation:emblemIn 1.5s cubic-bezier(.2,.9,.25,1) both}
+@keyframes emblemIn{
+  0%  {opacity:0;transform:scale(1.45);filter:blur(16px) brightness(2.4)}
+  38% {opacity:1}
+  100%{opacity:1;transform:none;filter:none}
+}
+.hero-stage.awaken .sweep{animation:sweep 1.1s ease-in-out infinite}
+
 .core{
   position:relative; width:66%; aspect-ratio:1; display:grid; place-items:center;
-  filter:drop-shadow(0 0 26px rgba(53,224,255,.16));
+  /* ゆっくり漂う。上下と左右を別々の周期にして、同じ所へ戻ってこないようにする */
+  animation:coreDrift 19s ease-in-out infinite, coreTilt 13s ease-in-out infinite;
 }
-body[data-mode=awake] .core{filter:drop-shadow(0 0 34px rgba(255,194,71,.3))}
-.core img{width:100%;height:100%;object-fit:contain;transition:opacity .5s}
+/* ゆっくり漂う。上下と左右の周期をずらして、機械っぽくならないようにする。
+   translate と rotate は別々のプロパティなので、二本のアニメが喧嘩しない。 */
+@keyframes coreDrift{
+  0%,100%{translate:-7px -6px}
+  25%    {translate: 6px -3px}
+  50%    {translate: 7px  7px}
+  75%    {translate:-5px  4px}
+}
+@keyframes coreTilt{0%,100%{rotate:-.8deg}50%{rotate:.8deg}}
+/* 待機のしるし＝GitHubの素のマーク。白い円のまま置いて、猫は地の色で抜く。
+   光は円の外にだけ出したいので、box-shadow を丸い箱に掛ける（drop-shadowだと猫が光る）。 */
+.core-mark{
+  width:76%; aspect-ratio:1; border-radius:50%; display:block;
+  box-shadow:0 0 26px -2px rgba(53,224,255,.5),
+             0 0 66px -6px rgba(53,224,255,.34),
+             0 0 120px -20px rgba(53,224,255,.3);
+  animation:coreHalo 6.5s ease-in-out infinite;
+}
+.core-mark svg{width:100%;height:100%;display:block}
+.core-mark path{fill:#fff}
+@keyframes coreHalo{
+  0%,100%{box-shadow:0 0 26px -2px rgba(53,224,255,.5),
+                     0 0 66px -6px rgba(53,224,255,.34),
+                     0 0 120px -20px rgba(53,224,255,.3)}
+  50%    {box-shadow:0 0 34px -2px rgba(53,224,255,.66),
+                     0 0 86px -6px rgba(53,224,255,.46),
+                     0 0 150px -20px rgba(53,224,255,.36)}
+}
+.core img{width:100%;height:100%;object-fit:contain;transition:opacity .5s;
+          filter:drop-shadow(0 0 34px rgba(255,194,71,.3))}
+.core img[hidden]{display:none}
+.core-mark[hidden]{display:none}
 .core.swap img{animation:swap 1.1s ease-out}
 @keyframes swap{
   0%{opacity:1;transform:scale(1)}
@@ -228,7 +338,24 @@ body[data-mode=awake] .sweep{background:linear-gradient(transparent,rgba(255,194
   display:flex;align-items:center;gap:10px;margin:26px 0 12px;
   font-family:var(--mono);font-size:11px;letter-spacing:.16em;
 }
-.team-h:first-child{margin-top:0}
+.tsec:first-child .team-h{margin-top:0}
+/* 組織図から飛んできたときだけ、その棚をひと呼吸あかるくする。 */
+.tsec{position:relative;scroll-margin-top:76px}
+.tsec.lit .team-h{animation:tsecHi 2s ease-out both}
+.tsec.lit::before{content:"";position:absolute;left:-14px;top:-8px;bottom:-8px;width:2px;
+                  background:currentColor;animation:tsecBar 2s ease-out both}
+@keyframes tsecHi{
+  0%{filter:brightness(2.1)}
+  22%{filter:brightness(1.5)}
+  100%{filter:none}
+}
+@keyframes tsecBar{
+  0%{opacity:0;transform:scaleY(.2)}
+  14%{opacity:1;transform:scaleY(1)}
+  70%{opacity:1}
+  100%{opacity:0}
+}
+@media(max-width:640px){.tsec.lit::before{left:-8px}}
 .team-h .sw{width:10px;height:10px;flex:none;transform:rotate(45deg)}
 .team-h .jp{font-family:var(--sans);letter-spacing:.06em;color:var(--tx);font-weight:700}
 .team-h .cnt{color:var(--mute);margin-left:auto}
@@ -290,10 +417,12 @@ body[data-mode=awake] .sweep{background:linear-gradient(transparent,rgba(255,194
                   height:var(--stem);background:var(--line2)}
 .og-units::after{content:"";position:absolute;top:var(--stem);height:1px;background:var(--line2);
                  left:calc(50% / var(--n));right:calc(50% / var(--n))}
-.og-unit{position:relative;overflow:hidden;background:var(--bg2);
-         border:1px solid var(--line);
+/* ノードは押せる。押すと、その回の展示室のそのチームの棚へ飛ぶ。 */
+.og-unit{position:relative;background:var(--bg2);
+         border:1px solid var(--line);text-decoration:none;
          padding:13px 6px 12px;display:flex;flex-direction:column;
-         align-items:center;gap:6px;text-align:center;min-width:0}
+         align-items:center;gap:6px;text-align:center;min-width:0;
+         transition:border-color .16s,transform .16s,background .16s}
 .og-unit::before{content:"";position:absolute;top:calc(var(--stem) * -1);left:50%;
                  width:1px;height:var(--stem);background:var(--line2)}
 .og-unit .mas{width:56px;height:56px}
@@ -303,7 +432,17 @@ body[data-mode=awake] .sweep{background:linear-gradient(transparent,rgba(255,194
              align-items:center;justify-content:center}
 .og-unit .uc{font-family:var(--mono);font-size:8.5px;letter-spacing:.14em;color:var(--mute)}
 .og-unit::after{content:"";position:absolute;left:0;right:0;bottom:0;height:2px;
-                background:currentColor;opacity:.55}
+                background:currentColor;opacity:.55;transition:opacity .16s}
+/* 押せることを示す小さな矢印。ふだんは伏せておく。 */
+.og-go{position:absolute;top:7px;right:8px;font-style:normal;font-size:9px;
+       color:currentColor;opacity:0;transform:translateX(-3px);
+       transition:opacity .16s,transform .16s}
+.og-unit:hover,.og-unit:focus-visible{
+  border-color:currentColor;transform:translateY(-3px);
+  background:color-mix(in srgb,currentColor 8%,var(--bg2))}
+.og-unit:hover::after,.og-unit:focus-visible::after{opacity:1}
+.og-unit:hover .og-go,.og-unit:focus-visible .og-go{opacity:.85;transform:none}
+.og-unit:focus-visible{outline:1px solid currentColor;outline-offset:2px}
 
 /* 幅がないと枝が折り返して線が合わなくなるので、細い画面では線をやめて素直に並べる。 */
 @media(max-width:640px){

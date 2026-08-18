@@ -29,6 +29,7 @@
       home_cta_trial: '▸ ちょうせんする',
       home_cta_mural: '▸ みんなのしるしを見る',
       home_cta_reseal: '▸ ふういんを もどす',
+      go_team: 'このチームの展示を見る',
       reseal_ask: 'ふういんを かけなおしますか？\nもういちど こころみに ちょうせんできるように なります。',
       hero_standby: 'CORE : SEALED — ちょうせんに合格すると、ここが変わります',
       hero_awake: 'CORE : OPEN — みんなのオクトキャット',
@@ -61,6 +62,7 @@
       trial_fail_msg: 'あと少しです。8問せいかいで、ふういんがとけます。もういちど、どうぞ。',
       trial_again: '▸ もういちど',
       trial_go_mural: '▸ みんなのしるしへ',
+      trial_go_release: '▸ ふういんを とく',
       trial_go_home: '▸ ホームへ',
       trial_done_note: 'クリアずみ。もういちど遊んでも、ふういんはとけたままです。',
 
@@ -113,6 +115,7 @@
       home_cta_trial: '▸ Take the trial',
       home_cta_mural: '▸ View the mark',
       home_cta_reseal: '▸ Re-seal the archive',
+      go_team: 'View this team',
       reseal_ask: 'Re-seal the archive?\nYou will be able to take the trial again.',
       hero_standby: 'CORE : SEALED — pass the trial and this will change',
       hero_awake: 'CORE : OPEN — the Octocat of everyone',
@@ -145,6 +148,7 @@
       trial_fail_msg: 'Almost there. Eight correct lifts the seal. Give it another go.',
       trial_again: '▸ Try again',
       trial_go_mural: '▸ To the mark',
+      trial_go_release: '▸ Break the seal',
       trial_go_home: '▸ To home',
       trial_done_note: 'Already cleared. Replaying will not re-seal anything.',
 
@@ -488,6 +492,9 @@
   /* 組織図の回ごとの色。回が増えても順ぐりに割り当たる。 */
   const HALLC = ['var(--acc)', 'var(--pk)', 'var(--ok)', 'var(--warn)'];
 
+  /* 合格したその場では封印をとかず、ホームに帰ってきたところで演出ごと起こす。 */
+  let pendingAwaken = false;
+
   /* GitHub公式の動くステッカー。チームの見た目に近いものを当てている。 */
   const MASCOT = {
     mona: 'mona', mona1: 'mona', mona2: 'mona2',
@@ -504,30 +511,90 @@
   }
 
   /* ============ 起動演出 ============ */
-  const BOOT = [
-    'OCTOCAT ARCHIVE SYSTEM  v2.6',
-    'linking  ................ OK',
-    'specimens ............... %N%',
-    'halls ................... %H%',
-    'seal .................... %S%',
+  /* ガンダムSEEDのOS起動画面の作法。まずログが一気に流れ、
+     つぎに頭文字が一段ずつ立ち上がって OCTOCAT になり、最後に系統名が出る。 */
+  const BOOT_LOG = [
+    'OCTOCAT ARCHIVE SYSTEM   v2.6',
+    'BOOT SEQUENCE INITIATED',
     '',
-    '>> WELCOME',
+    'CORE LINK ............... ESTABLISHED',
+    'PHASE SHIFT ............. STANDBY',
+    'MEMORY BANK ............. %N% SPECIMENS',
+    'HALL INDEX .............. %H% REGISTERED',
+    'FRAME CAPACITY .......... %C% SEATS',
+    'MOSAIC RENDERER ......... ONLINE',
+    'SEAL STATUS ............. %S%',
+    '',
+    'LOADING OPERATING SYSTEM',
+  ];
+  const BOOT_ACR = [
+    ['O', 'PEN'], ['C', 'OLLABORATIVE'], ['T', 'ESSELLATED'],
+    ['O', 'RIGIN'], ['C', 'REATIVE'], ['A', 'RCHIVE'], ['T', 'ERMINAL'],
   ];
 
   function boot(done) {
-    const el = $('#boot-text');
+    const el = $('#boot-text'), acr = $('#boot-acr'),
+          word = $('#boot-word'), st = $('#boot-st'), box = $('#boot');
     setMascot($('#boot-mas'), 'universe', 'var(--acc)');
-    const lines = BOOT.map(s => s
+
+    const seats = D.rooms.reduce((s, r) => s + Number(r.seats || 0), 0);
+    const lines = BOOT_LOG.map(s => s
       .replace('%N%', String(D.people.length))
       .replace('%H%', String(D.rooms.length))
+      .replace('%C%', String(seats))
       .replace('%S%', isAwake() ? 'RELEASED' : 'ENGAGED'));
-    let i = 0;
+
+    let timers = [], ended = false;
+    const at = (ms, fn) => timers.push(setTimeout(fn, ms));
+
+    /* 途中で押されたら全部たたんで、すぐ本編へ。長い演出は一度見れば十分なので。 */
+    const finish = () => {
+      if (ended) return;
+      ended = true;
+      timers.forEach(clearTimeout);
+      box.removeEventListener('click', finish);
+      document.removeEventListener('keydown', finish);
+      done();
+    };
+    box.addEventListener('click', finish);
+    document.addEventListener('keydown', finish);
+
+    /* 1) ログが流れる */
+    let i = 0, T = 0;
     const tick = () => {
-      if (i >= lines.length) { setTimeout(done, 260); return; }
+      if (ended) return;
       el.textContent += lines[i++] + '\n';
-      setTimeout(tick, 90);
+      if (i < lines.length) timers.push(setTimeout(tick, 52));
     };
     tick();
+    T = lines.length * 52 + 240;
+
+    /* 2) 頭文字が一段ずつ立ち上がる */
+    acr.hidden = false;
+    BOOT_ACR.forEach(([c, rest], n) => at(T + n * 165, () => {
+      const row = document.createElement('div');
+      row.className = 'bt-row';
+      row.innerHTML = `<b>${c}</b><span>${rest}</span>`;
+      acr.appendChild(row);
+    }));
+    T += BOOT_ACR.length * 165 + 300;
+
+    /* 3) 立ち上がった頭文字が寄り集まって系統名になる */
+    at(T, () => {
+      acr.classList.add('fold');
+      word.hidden = false;
+      word.innerHTML = BOOT_ACR.map(([c], n) =>
+        `<b style="animation-delay:${n * 45}ms">${c}</b>`).join('');
+    });
+    /* 寄り集まりきったら頭文字の席をたたむ。残すと空白が居すわる。 */
+    at(T + 440, () => { acr.hidden = true; });
+    T += 620;
+
+    at(T, () => {
+      st.hidden = false;
+      st.textContent = isAwake() ? 'SYSTEM AWAKENED' : 'SYSTEM STANDBY';
+    });
+    at(T + 620, finish);
   }
 
   /* ============ 画面の骨 ============ */
@@ -587,13 +654,8 @@
   }
 
   /* ============ ホーム ============ */
-  function vHome() {
-    const app = view('t-home');
-    const img = $('#hero-img', app);
-    img.src = isAwake() ? 'img/emblem.webp' : 'img/mark.png';
-    img.alt = isAwake() ? t('hero_awake') : 'GitHub';
-    $('#hero-cap', app).innerHTML = isAwake() ? t('hero_awake') : t('hero_standby');
-
+  /** ホーム下段のボタン。封印がとける瞬間に差しかえたいので、別にしてある。 */
+  function drawHomeActs(app) {
     const acts = [];
     D.rooms.forEach(r => acts.push(
       `<a class="btn ghost" href="#/hall/${r.cohort}">▸ ${lang === 'ja' ? r.title : 'Hall ' + r.cohort}</a>`));
@@ -606,6 +668,21 @@
     if (rs) rs.addEventListener('click', () => {
       if (confirm(t('reseal_ask'))) reseal();
     });
+  }
+
+  /* ============ ホーム ============ */
+  function vHome() {
+    const app = view('t-home');
+    /* 待機は GitHub の素のマーク、覚醒はみんなのモザイク。入れかえは表示の出しわけでやる。 */
+    const img = $('#hero-img', app), cm = $('#core-mark', app);
+    const awake = isAwake();
+    img.hidden = !awake;
+    if (cm) cm.hidden = awake;
+    if (awake) { img.src = 'img/emblem.webp'; img.alt = t('hero_awake'); }
+    $('#hero-cap', app).innerHTML = awake ? t('hero_awake') : t('hero_standby');
+
+    drawHomeActs(app);
+    if (pendingAwaken) { pendingAwaken = false; requestAnimationFrame(() => awaken(app)); }
 
     /* 配備ユニット＝組織図。回ごとに枝分かれさせて、チームが重なっても見わけがつくようにする。
        枝はチームまで。だれがいるかは、その先の展示室で見る。 */
@@ -617,13 +694,16 @@
       return { r, cid, mine, keys: [...keys, ...rest] };
     }).filter(h => h.keys.length);
 
-    const unit = (k, mine) => {
+    /* ノードは押せる。押すと、その回の展示室のそのチームの棚まで飛ぶ。 */
+    const unit = (k, mine, cid) => {
       const n = mine.filter(p => p.team === k).length;
-      return `<div class="og-unit" style="color:${teamOf(k).color}">
+      return `<a class="og-unit" href="#/hall/${cid}/${encodeURIComponent(k)}"
+           style="color:${teamOf(k).color}" title="${esc(teamName(k))} — ${t('go_team')}">
           <div class="mas"><img src="${masSrc(MASCOT[k] || 'guest')}" alt="" loading="lazy" decoding="async"></div>
           <div class="un">${esc(teamName(k))}</div>
           <div class="uc">${String(n).padStart(2, '0')} ${lang === 'ja' ? '名' : 'PPL'}</div>
-        </div>`;
+          <i class="og-go">▸</i>
+        </a>`;
     };
 
     $('#units', app).innerHTML =
@@ -638,7 +718,7 @@
              <em>${String(h.mine.length).padStart(2, '0')} ${lang === 'ja' ? '名' : 'PPL'}</em>
            </a>
            <div class="og-units" style="--n:${h.keys.length}">
-             ${h.keys.map(k => unit(k, h.mine)).join('')}
+             ${h.keys.map(k => unit(k, h.mine, h.cid)).join('')}
            </div>
          </section>`).join('')}</div>`;
     fillCounts(app);
@@ -741,7 +821,7 @@
     requestAnimationFrame(() => ov.classList.add('on'));
   }
 
-  function vHall(cohort) {
+  function vHall(cohort, focus) {
     const room = D.rooms.find(r => String(r.cohort) === String(cohort));
     if (!room) return vHome();
     const app = view('t-hall');
@@ -769,14 +849,28 @@
     $('.teams', app).innerHTML = keys.map(k => {
       const list = mine.filter(p => p.team === k);
       const col = teamOf(k).color;
-      return `<div class="team-h" style="color:${col}">
+      return `<section class="tsec" data-team="${esc(k)}" style="color:${col}">
+        <div class="team-h">
           <div class="mas fr"><img src="${masSrc(MASCOT[k] || 'guest')}" alt="" loading="lazy" decoding="async"></div>
           <span class="jp">${esc(teamName(k))}</span>
           <i class="rule"></i>
           <span class="cnt">${list.length}</span>
         </div>
-        <ul class="grid">${list.map(cardHTML).join('')}</ul>`;
+        <ul class="grid">${list.map(cardHTML).join('')}</ul>
+      </section>`;
     }).join('');
+
+    /* 組織図から来たときは、そのチームの棚まで運んで、ひと呼吸だけ光らせる。
+       route() の scrollTo(0,0) より後に動かしたいので1フレーム待つ。 */
+    if (focus) {
+      const sec = $(`.tsec[data-team="${CSS.escape(focus)}"]`, app);
+      if (sec) requestAnimationFrame(() => {
+        const y = sec.getBoundingClientRect().top + window.scrollY - 76;
+        window.scrollTo({ top: Math.max(0, y), behavior: 'smooth' });
+        sec.classList.add('lit');
+        setTimeout(() => sec.classList.remove('lit'), 2000);
+      });
+    }
   }
 
   const cardHTML = p => `<li><a class="card" href="#/p/${p.id}">
@@ -951,10 +1045,15 @@
       const acts = [];
       if (pass) {
         const already = isAwake();
-        if (!already) release();
-        acts.push(`<a class="btn" href="#/mural">${t('trial_go_mural')}</a>`);
-        acts.push(`<a class="btn ghost" href="#/">${t('trial_go_home')}</a>`);
-        if (already) $('#tr-msg', app).innerHTML += `<br><span class="dim">${t('trial_done_note')}</span>`;
+        if (already) {
+          acts.push(`<a class="btn" href="#/mural">${t('trial_go_mural')}</a>`);
+          acts.push(`<a class="btn ghost" href="#/">${t('trial_go_home')}</a>`);
+          $('#tr-msg', app).innerHTML += `<br><span class="dim">${t('trial_done_note')}</span>`;
+        } else {
+          /* 封印はここではとかない。ホームのしるしの前まで連れていって、そこでとく。 */
+          release();
+          acts.push(`<a class="btn" href="#/">${t('trial_go_release')}</a>`);
+        }
       } else {
         acts.push(`<button class="btn" type="button" id="tr-again">${t('trial_again')}</button>`);
       }
@@ -964,21 +1063,47 @@
     }
   }
 
-  /* 封印をとく。ここが「システムの使い方が変わる」ところ。 */
+  /* 封印がとける。ためて → はじけて → 世界の色が変わり → 絵が実体になる。
+     見せ場はホームのしるしなので、合格したその場では起こさず、
+     ホームに帰ってきたところで起こす。 */
   function release() {
+    pendingAwaken = true;
+  }
+
+  function awaken(app) {
+    const stage = $('#hero-stage', app);
     store.cleared = true;
-    const f = $('#flash');
-    f.classList.remove('go');
-    void f.offsetWidth;
-    f.classList.add('go');
-    document.body.dataset.mode = 'awake';
-    applyStatic();
-    drawNav();
+    if (!stage) { applyStatic(); drawNav(); return; }
+
+    stage.classList.remove('awaken');
+    void stage.offsetWidth;
+    stage.classList.add('awaken');
+
+    /* しるしがはじけた瞬間に、世界の色ごと入れかえる */
+    setTimeout(() => {
+      const f = $('#flash');
+      f.classList.remove('go');
+      void f.offsetWidth;
+      f.classList.add('go');
+
+      const img = $('#hero-img', app), cm = $('#core-mark', app);
+      if (cm) cm.hidden = true;
+      if (img) { img.src = 'img/emblem.webp'; img.alt = t('hero_awake'); img.hidden = false; }
+      const cap = $('#hero-cap', app);
+      if (cap) cap.innerHTML = t('hero_awake');
+
+      applyStatic();
+      drawNav();
+      drawHomeActs(app);
+    }, 720);
+
+    setTimeout(() => stage.classList.remove('awaken'), 2500);
   }
 
   /* 封印をかけなおす。ためした人が、もういちど最初から遊べるようにするための戻し道。 */
   function reseal() {
     store.cleared = false;
+    pendingAwaken = false;
     document.body.dataset.mode = 'standby';
     applyStatic();
     drawNav();
@@ -1090,8 +1215,8 @@
   /* ============ 行き先 ============ */
   function route() {
     const h = (location.hash || '#/').slice(2);
-    const [a, b] = h.split('/');
-    if (a === 'hall' && b) vHall(b);
+    const [a, b, c] = h.split('/');
+    if (a === 'hall' && b) vHall(b, c ? decodeURIComponent(c) : '');
     else if (a === 'p' && b) vPerson(b);
     else if (a === 'trial') vTrial();
     else if (a === 'mural') vMural();
